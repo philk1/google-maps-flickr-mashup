@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/custom.css" /> 
+    <title>Google Maps + flickr Mashup</title>
+
+    <script src="server/flickr.php"></script>
+    <script src="js/jquery-1.7.2.min.js"></script>
+    <link rel="stylesheet" href="css/lightbox.css" />
+    <script src="js/lightbox.js"></script>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHwrUEZdGT3rn1MbfnQZqHYTNBsdAe5lo&sensor=false"></script>
+    <script>
+      var map;
+      function initialize() {
+        var mapOptions = {
+          center: new google.maps.LatLng(47,-122),
+          zoom: 9,
+          mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        map = new google.maps.Map(document.getElementById("map"),
+            mapOptions);
+              
+      }
+
+      function drawMap(){
+        google.maps.event.addDomListener(window, 'load', initialize);        
+        $("#user").val("");
+        $("#text").val("");
+      }
+
+      
+      window.onload = drawMap();
+      var user;
+      var defaultURL = "http://www.csee.umbc.edu/~philk1/d18d91faa3ac7bf4/javascript/p3/server/flickr.php?user_id=36726765@N05&text=&bbox=";
+      //$(function(){("#search").click(function(){alert("sorry, can't do that now.")});});      
+      
+      var pair = new Object();marker
+
+      
+      $.ajax({
+        url: defaultURL,
+        dataType: "html",
+        success: function(response){
+          var data = JSON.parse(response);
+          var numImages = data.photos.photo.length;
+          var numLocations = 0;
+          
+          for(var i=0; i<data.photos.photo.length; i++){
+	    var lat = data.photos.photo[i].latitude; 
+            var lng = data.photos.photo[i].longitude;
+	    var both = lat+" "+lng;
+            var thumb = "http://farm"+data.photos.photo[i].farm+".staticflickr.com/"+data.photos.photo[i].server+"/"+data.photos.photo[i].id+"_"+data.photos.photo[i].secret+"_s.jpg";
+	    var site = "http://farm"+data.photos.photo[i].farm+".staticflickr.com/"+data.photos.photo[i].server+"/"+data.photos.photo[i].id+"_"+data.photos.photo[i].secret+".jpg";
+	    var image = '<img src="'+thumb+'">';
+            var anchor;
+	    if(pair[both]==null){
+	      //pair[both]=image;
+              anchor = '<a href='+site+ ' rel="lightbox['+both+']">'+image+'</a>';
+	      pair[both]=anchor;
+              numLocations+=1;
+	    } 
+	    else{
+              //pair[both]+=image;
+              anchor = '<a href='+site+ ' rel="lightbox['+both+']">'+image+'</a>';
+              pair[both]+=anchor;
+            }					   
+	    function makeMarker(){
+	      var marker = new google.maps.Marker({
+		position: new google.maps.LatLng(lat, lng),
+                map: map
+              });
+              marker.visible = true;
+	      marker.setMap(map);
+	      var content = pair[both];
+	      var infoPane = new google.maps.InfoWindow({content: content});
+	      google.maps.event.addListener(marker, "click", function(){
+	        infoPane.open(map, marker);
+              });
+	    }makeMarker();
+	  } 
+	  var str = numImages+" images in "+numLocations+" locations.";					   
+          $('#results').html(str);
+         }
+       });
+      </script>
+    <!-- you'll need to include the following tags here
+           * google maps script tag
+           * lightbox script tag
+           * lightbox css tag
+           * your scripts tag
+    -->
+    
+  </head>
+
+  <body>
+
+    <!-- black bar atop page -->
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <span class="brand">
+            <span class="gb">G</span><span class="gr">o</span><span class="gy">o</span><span class="gb">g</span><span class="gg">l</span><span class="gr">e</span> Maps +
+            <span class="fb">flick</span><span class="fp">r</span> Mashup
+          </span>
+        </div>
+      </div>
+    </div>
+    
+
+    <div id="sidebar">
+      
+      <!-- the search form -->
+      <h3>Search</h3>
+      <hr />
+      <form>
+
+        <!-- the user input -->
+	<div class="control-group">
+          <label class="control-label" for="user">User (blank for any):</label>
+          <div class="controls">
+            <input type="text" style="input-large" id="user" />
+          </div>
+	</div>
+
+	<!-- the text/keyword input -->
+	<div class="control-group">
+          <label class="control-label" for="text">Text (blank for any):</label>
+          <div class="controls">
+            <input type="text" style="input-large" id="text" />
+          </div>
+	</div>
+
+	<!-- buttons to submit/reset -->
+	<div class="actions">
+          <button class="btn" type="button" id="reset">Reset</button>
+          <button  class="btn btn-primary" type="button" id="search">
+	    <i class="icon-search icon-white" ></i>
+	    Search
+	  </button>
+	</div>
+	
+	<!-- the results area -->
+	<h3>Results</h3>
+	<hr />
+	<div id="results">
+	  <!-- search results go here -->
+	</div>
+
+      </form>
+      
+    </div>
+    
+    <!-- actual map should be built out in here -->    
+    
+
+     <div id="map">
+       
+     </div>
+
+   
+  </body>
+</html>
